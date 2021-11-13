@@ -1,80 +1,69 @@
-import random
 
-def raspr(A, el, load_unit_weight, con):
-    total = 0
-    print("===RASPR===")
-    print()
-    #print(A)
-
-    for i,item in enumerate(A):
-        if item <= el:
-            total += item
-            print(load_unit_weight)
-            print(A)
-            exit(0)
-        else:
-            A[i] -= el
-            load_unit_weight.append({con+1: el})
-            print(A)
-            print(load_unit_weight)
-            return
-            
-        
-
-    """for item in A:
-        total += item"""
-    print(el)
-    print(load_unit_weight)
+def calculate_loads_weight(load_unit_weight, A): # псевдорезультат
+    print(f"load_unit_weight = {load_unit_weight}")
+    print(f"A = {A}")
+    # разобраться с копией 
     
+    arr = []
+    remain = []
+    start = 0
+    for i, el in enumerate(A):
+        weight_el = el
+        # сколько можем загрузить полностью
+        for j in range(len(load_unit_weight)):
+            if load_unit_weight[j] != -1:
+                if load_unit_weight[j+1]:
+                    if weight_el >= load_unit_weight[j]:
+
+                        weight_el -= load_unit_weight[j]
+                        print(f"Остаток для {el} = {weight_el}")
+                        arr.append([i+1, load_unit_weight[j]])
+                        print(arr)
+
+
+
+                
+                    if weight_el < load_unit_weight[j+1]:
+                        remain.append([i+1, weight_el])
+                        print(f"remain = {remain}")
+                        load_unit_weight[j] = -1
+                        break 
+                load_unit_weight[j] = -1
+                print(f"remain = {remain}")
+                print(load_unit_weight)
+                print(f"arr = {arr}")
+    print("-----------------------")
+    print(f"remain = {remain}")
+    print(f"load_unit_weight = {load_unit_weight}")
+    print(f"arr = {arr}")
+    print("-----------------------")
+
+    for item in remain:
+        if item[-1] != 0:
+            print(f"{item[-1]} единиц товара из {item[0]} вида грузов разложены по оставшимся контейнерам")
+
 
 
 def A_to_X(A, D):
+    total = sum(A)
     load_unit_weight = []
+    for i, el in enumerate(D):
+        if total > el:
+            load_unit_weight.append(el)
+            total -= el
+        else:
+            load_unit_weight.append(total)
+            break
     
-    for con, el in enumerate(D): # берем макс вес контейнера
-        print("Проверка остатков груза на потребность перераспределения")
-        """for load in A:
-            if load < el//len(A): # нужно перераспределять (дошли до момента, когда поровну уже взять не получается)
-                print(A)
-                raspr(A, el, load_unit_weight, con)"""
-
-        for i, item in enumerate(A):
-            print(f"Контейнер №{con+1}, грузоподъемность = {el}")
-            
-            if item >= el//len(A): # если остаток груза в А не меньше 
-                weight = el//len(A) # вычисляем вес, как D контейнера / количество элементов в А
-                print(f"A = {A}")
-                A[i] -= weight
-                
-            else:
-                weight = item
-                print(f"A = {A}")
-                A[i] -= weight
-                A.pop(A[i])
-                
-                print("TEST")
-                # не загружается последний груз
-            #load_unit_weight.append({con+1:weight})
-            load_unit_weight.append(weight)
-            if not A:
-                return load_unit_weight
-                
-        print(f"load = {load_unit_weight}")
-        print(f"A после загрузки контейнера = {A}")
-        print("-----------------------------------")
-        
+    calculate_loads_weight(load_unit_weight, A)
+    A = []        
+    return load_unit_weight, A
 
 
-    # считать максимальный весь исходя из грузоподъемности судна
-    return load_unit_weight
-
-def get_container_weight(p, load_unit_weight):
-    weight = 0
-    for k in range(p):
-        load_unit_weight # Х в задаче
-        weight += load_unit_weight[0] # добавляем вес груза в вес контейнера
-        load_unit_weight.pop(0)
-    return weight
+def get_container_weight(load_unit_weight):
+    weigth = load_unit_weight[0]
+    load_unit_weight.pop(0)
+    return weigth
 
 
 def get_ship_weight(containers_weight):
@@ -92,9 +81,15 @@ def calculate(n, p, m, C, A, D, load_unit_weight):
         containers_weight = []
         for i in range(m): # контейнерам
             if load_unit_weight:
-                x = get_container_weight(p, load_unit_weight) # узнаем вес контейнер
+                
+                x = get_container_weight(load_unit_weight) # узнаем вес контейнера
                 containers_weight.append(x) # добавляем вес контейнера в массив корабля
+            else:
+                break
             print(f"Вес контейнера {i+1} на корабле {j+1} = {x}")
+            #print(load_unit_weight)
+                
+
 
         # -- возвращаемся к кораблю -- #
         
@@ -125,10 +120,10 @@ if __name__=="__main__":
          1000, 2000, 4000, 3000, 3000]
 
 
-
     
 
-    load_unit_weight = A_to_X(A, D) # считаем вес каждой единицы груза на основе А
+    load_unit_weight, A = A_to_X(A, D) # считаем вес каждой единицы груза на основе А
+
 
     print(f"Веса = {load_unit_weight}")
     print(A)
