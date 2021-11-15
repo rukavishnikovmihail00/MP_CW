@@ -1,9 +1,22 @@
 import json
+import logging
 
 
-def calculate_loads_weight(load_unit_weight, A): 
-    print(f"load_unit_weight = {load_unit_weight}")
-    print(f"A = {A}")
+def init_logger(debug : False):
+    logger = logging.getLogger()
+    if debug:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+    
+    formatter = logging.Formatter('%(asctime)s [%(levelname)s] : %(message)s', datefmt='%H:%M:%S')
+    sh = logging.StreamHandler()
+
+    logger.addHandler(sh)
+
+
+def calculate_loads_weight(load_unit_weight, A):
+    print(f"\nГрузы = {A}\n")
     total_weight_start = sum(load_unit_weight)
     arr = []
     remain = []
@@ -15,44 +28,57 @@ def calculate_loads_weight(load_unit_weight, A):
             if load_unit_weight[j] != -1:
                 if load_unit_weight[j+1]:
                     if weight_el >= load_unit_weight[j]:
-
                         weight_el -= load_unit_weight[j]
-                        print(f"Остаток для {el} = {weight_el}")
+                        logging.debug(f"Остаток для {el} = {weight_el}")
                         arr.append([i+1, load_unit_weight[j]])
-                        print(arr)
-
-
+                        logging.debug(arr)
 
                 
                     if weight_el < load_unit_weight[j+1]:
                         remain.append([i+1, weight_el])
-                        print(f"remain = {remain}")
+                        logging.debug(f"remain = {remain}")
                         load_unit_weight[j] = -1
                         break 
                 load_unit_weight[j] = -1
-                print(f"remain = {remain}")
-                print(load_unit_weight)
-                print(f"arr = {arr}")
-    print("-----------------------")
-    print(f"remain = {remain}")
-    print(f"load_unit_weight = {load_unit_weight}")
-    print(f"arr = {arr}")
-    print("-----------------------")
-    print(f"Единиц груза для погрузки всего: {total_weight_start}")
+                logging.debug(f"remain = {remain}")
+                logging.debug(load_unit_weight)
+                logging.debug(f"arr = {arr}")
+                
+    logging.debug("-----------------------")
+    logging.debug(f"remain = {remain}")
+    logging.debug(f"load_unit_weight = {load_unit_weight}")
+    logging.debug(f"arr = {arr}")
+    logging.debug("-----------------------")
+    logging.info(f"Единиц груза для погрузки всего: {total_weight_start}\n")
 
 
     for item in remain:
         if item[-1] != 0:
-            print(f"{item[-1]} единиц товара из {item[0]} вида грузов разложены по {len(load_unit_weight) - len(arr)} оставшимся контейнерам")
-
+            logging.debug(f"{item[-1]} единиц товара из {item[0]} вида грузов разложены по {len(load_unit_weight) - len(arr)} оставшимся контейнерам")
+           
     
     total_weight = 0
 
     for item in arr:
         total_weight += item[-1]
 
+    logging.debug(f"{total_weight} единиц груза полностью заполнили первые {len(arr)} контейнеров")
 
-    print(f"{total_weight} единиц груза полностью заполнили первые {len(arr)} контейнеров")
+
+    logging.info("\n======= Оптимальное распределение грузов =======\n")
+    shipment = []
+
+    new_arr = arr.copy()
+
+    for i in range(n):
+        for j in range(m):
+            if new_arr:
+                shipment.append([f"Корабль {str(i+1)}, контейнер {str(j+1)}: груз вида {str(new_arr[0][0])} = {str(new_arr[0][1])} единиц"])
+                new_arr.pop(0)
+    for el in shipment:
+        logging.info(el[0])
+    # ДОДЕЛАТЬ С ПОСЛЕДНИМИ КОНТЕЙНЕРАМИ
+    logging.info("=================================================\n")
 
 
 def A_to_X(A, D):
@@ -97,28 +123,32 @@ def calculate(n, p, m, C, A, D, load_unit_weight):
                 containers_weight.append(x) # добавляем вес контейнера в массив корабля
             else:
                 break
-            print(f"Вес контейнера {i+1} на корабле {j+1} = {x}")
+            logging.debug(f"Вес контейнера {i+1} на корабле {j+1} = {x}")
                 
         
         ship_weight = get_ship_weight(containers_weight)
-        print(f"Вес корабля {j+1} = {ship_weight}")
+        logging.debug(f"\nВес корабля {j+1} = {ship_weight}\n")
 
         if ship_weight != 0:
-            result.append(C[j]*ship_weight)
-            Y.append([j, 1]) # the ship is in use
+            result.append(C[j]*1)
+            Y.append([j+1, 1]) # the ship is in use
         else:
-            Y.append([j, 0]) # the ship is not in use
+            Y.append([j+1, 0]) # the ship is not in use
     
     return Y, result
 
 
 if __name__=="__main__":
-    ENV_FILE = "env.json"
+
+    debug = True
+    init_logger(debug)
     
+
+    ENV_FILE = "env1.json"
+
     with open(ENV_FILE, 'r') as r_file:
         data = json.load(r_file)
 
-    print(data)
     n = data["n"]
     p = data["p"]
     m = data["m"]
@@ -129,10 +159,19 @@ if __name__=="__main__":
 
     load_unit_weight, A = A_to_X(A, D) # считаем вес каждой единицы груза на основе А
 
-
-    print(f"Итоговая загрузка контейнеров = {load_unit_weight}")
+    logging.debug(f"Итоговая загрузка контейнеров = {load_unit_weight}\n")
 
     Y, result = calculate(n, p, m, C, A, D, load_unit_weight)
     
-    print(f"Y = {Y}")
-    print(f"Result = {result}")
+    logging.info(f"==== Использование кораблей ====\n")
+    for el in Y:
+        if el[1] != 0:
+            logging.info(f"     Судно {el[0]} используется")
+        else:
+            logging.info(f"    Судно {el[0]} не используется")
+    logging.info(f"================================\n")
+
+    logging.info(f"=============== Затраты ===============\n")
+    for i, el in enumerate(result):
+        logging.info(f"Затраты на использование судна {i+1} = {el}")
+    logging.info(f"=======================================\n")
