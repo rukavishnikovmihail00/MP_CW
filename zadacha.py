@@ -1,9 +1,10 @@
+import json
 
-def calculate_loads_weight(load_unit_weight, A): # псевдорезультат
+
+def calculate_loads_weight(load_unit_weight, A): 
     print(f"load_unit_weight = {load_unit_weight}")
     print(f"A = {A}")
-    # разобраться с копией 
-    
+    total_weight_start = sum(load_unit_weight)
     arr = []
     remain = []
     start = 0
@@ -37,11 +38,21 @@ def calculate_loads_weight(load_unit_weight, A): # псевдорезульта�
     print(f"load_unit_weight = {load_unit_weight}")
     print(f"arr = {arr}")
     print("-----------------------")
+    print(f"Единиц груза для погрузки всего: {total_weight_start}")
+
 
     for item in remain:
         if item[-1] != 0:
-            print(f"{item[-1]} единиц товара из {item[0]} вида грузов разложены по оставшимся контейнерам")
+            print(f"{item[-1]} единиц товара из {item[0]} вида грузов разложены по {len(load_unit_weight) - len(arr)} оставшимся контейнерам")
 
+    
+    total_weight = 0
+
+    for item in arr:
+        total_weight += item[-1]
+
+
+    print(f"{total_weight} единиц груза полностью заполнили первые {len(arr)} контейнеров")
 
 
 def A_to_X(A, D):
@@ -55,7 +66,7 @@ def A_to_X(A, D):
             load_unit_weight.append(total)
             break
     
-    calculate_loads_weight(load_unit_weight, A)
+    calculate_loads_weight(load_unit_weight.copy(), A)
     A = []        
     return load_unit_weight, A
 
@@ -87,11 +98,7 @@ def calculate(n, p, m, C, A, D, load_unit_weight):
             else:
                 break
             print(f"Вес контейнера {i+1} на корабле {j+1} = {x}")
-            #print(load_unit_weight)
                 
-
-
-        # -- возвращаемся к кораблю -- #
         
         ship_weight = get_ship_weight(containers_weight)
         print(f"Вес корабля {j+1} = {ship_weight}")
@@ -106,27 +113,24 @@ def calculate(n, p, m, C, A, D, load_unit_weight):
 
 
 if __name__=="__main__":
-    n = 5 # судно
-    p = 3 # вид груза
-    m = 5 # контейнер
-    C = [137, 112, 124, 115, 157] # затраты
-
-    A = [10000, 8000, 13000] # груз на погрузочной площадке РАСПРЕДЕЛЯТЬ ЕГО ПО КОНТЕЙНЕРАМ
-
-    D = [4000, 1000, 3000, 4000, 2000, # грузоподъемность
-         2000, 2000, 3000, 1000, 2000,
-         2000, 3000, 1000, 2000, 3000,
-         1000, 5000, 2000, 1000, 2000,
-         1000, 2000, 4000, 3000, 3000]
-
-
+    ENV_FILE = "env.json"
     
+    with open(ENV_FILE, 'r') as r_file:
+        data = json.load(r_file)
+
+    print(data)
+    n = data["n"]
+    p = data["p"]
+    m = data["m"]
+    C = data["C"]
+    A = data["A"]
+    D = data["D"]
+
 
     load_unit_weight, A = A_to_X(A, D) # считаем вес каждой единицы груза на основе А
 
 
-    print(f"Веса = {load_unit_weight}")
-    print(A)
+    print(f"Итоговая загрузка контейнеров = {load_unit_weight}")
 
     Y, result = calculate(n, p, m, C, A, D, load_unit_weight)
     
